@@ -1,0 +1,20 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        { 
+            "Effect":"Allow", 
+            "Principal": { 
+                "AWS":[
+                    "arn:aws:iam::685463979595:user/lucas.comum",
+                    "arn:aws:iam::685463979595:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_69c5f967629e5ab5"
+                ]
+            },
+            "Action":"sts:AssumeRole",
+            "Condition": {
+                "BoolIfExists": {
+                    "aws:MultiFactorAuthPresent": "false"
+                }
+            }
+        }
+    ]
+}

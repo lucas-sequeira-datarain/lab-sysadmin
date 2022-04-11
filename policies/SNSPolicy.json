@@ -1,0 +1,30 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "SNSReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "sns:Get*",
+                "sns:List*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SNSManageTopic",
+            "Effect": "Allow",
+            "Action": [
+                "kms:DescribeKey",
+                "sns:TagResource",
+                "sns:UntagResource",
+                "sns:CreateTopic",
+                "sns:Publish",
+                "sns:Subscribe",
+                "sns:Unsubscribe",
+                "sns:ConfirmSubscription",
+                "sns:DeleteTopic"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

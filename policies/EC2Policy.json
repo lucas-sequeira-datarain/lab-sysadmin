@@ -1,0 +1,77 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ActionsRequiredtoRunDeleteVolumes",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DeleteVolume",
+                "ec2:DeleteSnapshot"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEqualsIfExists": {
+                    "ec2:InstanceType": "t2.micro"
+                }
+            }
+        },
+        {
+            "Sid": "ActionsRequiredtoRunStopDeleteInstancesInVPC",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:TerminateInstances",
+                "ec2:RunInstances",
+                "ec2:StopInstances",
+                "ec2:StartInstances"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEqualsIfExists": {
+                    "ec2:InstanceType": "t2.micro"
+                }
+            }
+        },
+        {
+            "Sid": "SecurityAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CreateKeyPair"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "EC2Tagging",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateTags",
+                "ec2:DeleteTags"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ReadOnlyAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:Describe*",
+                "ec2:GetConsole*",
+                "iam:ListInstanceProfiles",
+                "compute-optimizer:GetEnrollmentStatus"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "CloudWatchLogs",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:ListDashboards",
+                "cloudwatch:*Dashboard*",
+                "cloudwatch:GetMetricData"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
