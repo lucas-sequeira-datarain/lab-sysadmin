@@ -7,4 +7,3 @@ MarkupSafe===1.1.1
 Werkzeug==1.0.1
 pyexcel==0.7.0
 gunicorn==20.1.0
-gevent==21.12.0

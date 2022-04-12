@@ -2,9 +2,9 @@ from flask import Flask, Response, redirect, make_response
 from src.metrics import get_ec2_metrics
 import pyexcel as pe
 from io import StringIO
-from flask_cors import CORS
-from gevent.pywsgi import WSGIServer
+import flask_cors as CORS
 
+# EB looks for an 'app' callable by default.
 app = Flask(__name__)
 CORS(app)
 
@@ -45,6 +45,5 @@ def default(any):
 if __name__ == "__main__":
     # Setting debug to True enables debug output. This line should be
     # removed before deploying a production app.
-    app.debug = True 
-    http_server = WSGIServer(('', 8000), app)
-    http_server.serve_forever()
+    app.debug = True
+    app.run()
