@@ -21,11 +21,13 @@ sudo systemctl start nginx
 sudo systemctl enable nginx
 
 # .conf file
+sudo rm -r /etc/nginx/sites-available/application.conf
 sudo cp assets/ami/application.conf /etc/nginx/sites-available/application.conf
 sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
 sudo systemctl restart nginx
 
 # .service file
+sudo rm -r /etc/systemd/system/application.service
 sudo cp assets/ami/application.service /etc/systemd/system/application.service
 sudo systemctl restart application.service
 sudo systemctl daemon-reload
