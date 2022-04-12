@@ -19,6 +19,7 @@ sudo chown -R www-data:www-data /var/www/application/
 cd ~/lab-sysadmin
 
 # Configure Nginx
+cd /var/www/application/
 
 # Configuration
 echo "[INTIALIZING NGINX]"
@@ -28,13 +29,13 @@ sudo systemctl enable nginx
 # .conf file
 echo "[CONFIGURING NGINX .CONF]"
 sudo rm -r /etc/nginx/sites-available/application.conf
-sudo cp assets/ami/application.conf /etc/nginx/sites-available/application.conf
+sudo cp ~/lab-sysadmin/assets/ami/application.conf /etc/nginx/sites-available/application.conf
 sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
 sudo systemctl restart nginx
 
 # .service file
 echo "[CONFIGURING NGINX .SERVICE]"
 sudo rm -r /etc/systemd/system/application.service
-sudo cp assets/ami/application.service /etc/systemd/system/application.service
+sudo cp ~/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
 sudo systemctl restart application.service
 sudo systemctl daemon-reload
