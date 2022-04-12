@@ -14,7 +14,7 @@ pip3 install -r application/requirements.txt
 # Create /var/www/application
 echo "[CREATE /VAR/WWW/APPLICATION]"
 sudo rm -r /var/www/application
-sudo cp -r ~/lab-sysadmin/application /var/www/application/
+sudo cp -r ~/lab-sysadmin/application /var/www/
 cd /var/www/application
 sudo chown -R www-data:www-data /var/www/application/
 cd ~/lab-sysadmin
@@ -38,10 +38,9 @@ sudo systemctl restart nginx
 echo "[CONFIGURING NGINX .SERVICE]"
 sudo rm -r /etc/systemd/system/application.service
 sudo cp ~/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
-sudo systemctl restart application.service
-sudo systemctl daemon-reload
 
 # App
 echo "[STARTING APP]"
-sudo systemctl start application
+sudo systemctl restart application
+sudo systemctl daemon-reload
 sudo systemctl enable application
