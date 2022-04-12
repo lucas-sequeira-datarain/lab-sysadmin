@@ -6,7 +6,7 @@ After=network.target
 User=root
 Group=www-data
 WorkingDirectory=/root/lab-sysadmin
-Environment="PATH=/root/lab-sysadmin-env/py-env/bin"
+Environment="PATH=/root/lab-sysadmin-env/bin"
 ExecStart=/root/lab-sysadmin/bin/gunicorn application/wsgi:app
 
 [Install]
