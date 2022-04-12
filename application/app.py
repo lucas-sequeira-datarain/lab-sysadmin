@@ -3,23 +3,23 @@ from src.metrics import get_ec2_metrics
 import pyexcel as pe
 from io import StringIO
 
-# EB looks for an 'application' callable by default.
-application = Flask(__name__)
+# EB looks for an 'app' callable by default.
+app = Flask(__name__)
 
 # Home Page (Return X-Private-IP in Header)
-@application.route('/')
+@app.route('/')
 def home():
     resp = Response("Home")
     resp.headers['X-Private-IP'] = 'MY.EC2.PRIVATE.IP'
     return resp
 
 # Health Check
-@application.route('/health')
+@app.route('/health')
 def health():
     return Response("Healthy")
 
 # Metrics
-@application.route('/metrics')
+@app.route('/metrics')
 def metrics():
 
     # Get EC2 Metrics
@@ -35,7 +35,7 @@ def metrics():
     return output
 
 # Redirect to Home Page
-@application.route('/<any>')
+@app.route('/<any>')
 def default(any):
     return redirect('/')
 
@@ -43,5 +43,5 @@ def default(any):
 if __name__ == "__main__":
     # Setting debug to True enables debug output. This line should be
     # removed before deploying a production app.
-    application.debug = True
-    application.run()
+    app.debug = True
+    app.run()
