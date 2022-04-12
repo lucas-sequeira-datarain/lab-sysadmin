@@ -22,21 +22,18 @@ cd ~/lab-sysadmin
 # Configure Nginx
 cd /var/www/application/
 
-# Configuration
-echo "[INTIALIZING NGINX]"
-sudo systemctl start nginx
-sudo systemctl enable nginx
+# .service file
+echo "[CONFIGURING APP .SERVICE]"
+sudo rm -r /etc/systemd/system/application.service
+sudo cp ~/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
+sudo systemctl start application
+sudo systemctl enable application
 
 # .conf file
-echo "[CONFIGURING NGINX .CONF]"
+echo "[CONFIGURING APP .CONF]"
 sudo rm -r /etc/nginx/sites-available/application.conf
 sudo cp ~/lab-sysadmin/assets/ami/application.conf /etc/nginx/sites-available/application.conf
 sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
-
-# .service file
-echo "[CONFIGURING NGINX .SERVICE]"
-sudo rm -r /etc/systemd/system/application.service
-sudo cp ~/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
 
 # App
 echo "[STARTING APP]"
@@ -45,3 +42,12 @@ sudo systemctl restart nginx
 sudo systemctl restart application
 sudo systemctl start application
 sudo systemctl enable application
+
+# Configuration
+echo "[INTIALIZING NGINX]"
+sudo rm -r /etc/nginx/sites-available/default
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+# sudo cp /home/ubuntu/lab-sysadmin/assets/ami/nginx.default.conf /etc/nginx/sites-available/default
+

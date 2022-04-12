@@ -3,10 +3,10 @@ Description=A Flask application run with Gunicorn.
 After=network.target
 
 [Service]
-User=www-data
+User=ubuntu
 Group=www-data
-WorkingDirectory=/var/www/application/
-ExecStart=/home/ubuntu/lab-sysadmin-env/bin/gunicorn --workers 3 --bind unix:/var/www/application/application.sock wsgi:app
+WorkingDirectory=/home/ubuntu/lab-sysadmin/application
+ExecStart=/home/ubuntu/lab-sysadmin-env/bin/gunicorn --workers 3 --bind unix:application.sock wsgi:app
  
 [Install]
 WantedBy=multi-user.target
