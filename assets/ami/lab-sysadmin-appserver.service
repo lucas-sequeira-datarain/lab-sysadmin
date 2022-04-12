@@ -7,7 +7,7 @@ User=root
 Group=www-data
 WorkingDirectory=/root/lab-sysadmin
 Environment="PATH=/root/lab-sysadmin-env/bin"
-ExecStart=/root/lab-sysadmin/bin/gunicorn application/wsgi:app
+ExecStart=/root/lab-sysadmin-env/bin/gunicorn application/wsgi:app
 
 [Install]
 WantedBy=multi-user.target
