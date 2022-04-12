@@ -1,5 +1,5 @@
 [Unit]
-Description=application.service - A Flask application run with Gunicorn.
+Description=A Flask application run with Gunicorn.
 After=network.target
 
 [Service]

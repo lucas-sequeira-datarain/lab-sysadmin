@@ -43,4 +43,5 @@ echo "[STARTING APP]"
 sudo systemctl daemon-reload
 sudo systemctl restart nginx
 sudo systemctl restart application
+sudo systemctl start application
 sudo systemctl enable application
