@@ -26,11 +26,11 @@ sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
 
 # App
 echo "[STARTING APP]"
-sudo systemctl daemon-reload
-sudo systemctl restart nginx
-sudo systemctl restart application
-sudo systemctl start application
-sudo systemctl enable application
+# sudo systemctl daemon-reload
+# sudo systemctl restart nginx
+# sudo systemctl restart application
+# sudo systemctl start application
+# sudo systemctl enable application
 
 # Configuration
 echo "[INTIALIZING NGINX]"
