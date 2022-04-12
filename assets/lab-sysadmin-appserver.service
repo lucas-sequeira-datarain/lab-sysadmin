@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn instance to serve myproject
+After=network.target
+
+[Service]
+User=root
+Group=www-data
+WorkingDirectory=/root/lab-sysadmin
+Environment="PATH=/root/lab-sysadmin-env/py-env/bin"
+ExecStart=/root/lab-sysadmin/bin/gunicorn application/wsgi:app
+
+[Install]
+WantedBy=multi-user.target
