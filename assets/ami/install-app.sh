@@ -38,9 +38,11 @@ sudo systemctl restart nginx
 echo "[CONFIGURING NGINX .SERVICE]"
 sudo rm -r /etc/systemd/system/application.service
 sudo cp ~/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
+sudo systemctl restart application.service
+sudo systemctl daemon-reload
+sudo systemctl restart application
 
 # App
 echo "[STARTING APP]"
-sudo systemctl restart application
-sudo systemctl daemon-reload
+sudo systemctl start application
 sudo systemctl enable application
