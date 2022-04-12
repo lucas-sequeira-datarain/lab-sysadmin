@@ -13,7 +13,8 @@ pip3 install -r application/requirements.txt
 
 # Create /var/www/application
 echo "[CREATE /VAR/WWW/APPLICATION]"
-sudo cp -r application /var/www/application
+sudo rm -r /var/www/application
+sudo cp -r ~/lab-sysadmin/application /var/www/application/
 cd /var/www/application
 sudo chown -R www-data:www-data /var/www/application/
 cd ~/lab-sysadmin

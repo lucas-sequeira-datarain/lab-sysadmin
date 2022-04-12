@@ -6,7 +6,7 @@ After=network.target
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/application/
-ExecStart=/home/ubuntu/lab-sysadmin-env/bin/gunicorn --workers 3 --bind unix:/var/www/application.sock wsgi:app
+ExecStart=/home/ubuntu/lab-sysadmin-env/bin/gunicorn --workers 3 --bind unix:/var/www/application/application.sock wsgi:app
  
 [Install]
 WantedBy=multi-user.target
