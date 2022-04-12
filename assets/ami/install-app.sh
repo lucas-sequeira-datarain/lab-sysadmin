@@ -39,3 +39,8 @@ sudo rm -r /etc/systemd/system/application.service
 sudo cp ~/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
 sudo systemctl restart application.service
 sudo systemctl daemon-reload
+
+# App
+echo "[STARTING APP]"
+sudo systemctl start application
+sudo systemctl enable application
