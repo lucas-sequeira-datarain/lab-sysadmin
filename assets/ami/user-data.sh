@@ -1,11 +1,11 @@
 #!/bin/bash
+source lab-sysadmin-env/bin/activate
 
 # Clone repo
 git clone https://github.com/lucas-sequeira-datarain/lab-sysadmin.git
 cd lab-sysadmin
 
 # Install dependencies
-source lab-sysadmin-env/bin/activate
 pip3 install -r application/requirements.txt
 
 # Create /var/www/application
@@ -20,10 +20,9 @@ cd ~/lab-sysadmin
 sudo cp assets/ami/application.conf /etc/nginx/sites-available/application.conf
 sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
 sudo systemctl restart nginx
-000000
 
 # .service file
-sudo cp assets/ami/lab-sysadmin-appserver.service /etc/systemd/system/application.service
+sudo cp assets/ami/application.service /etc/systemd/system/application.service
 sudo systemctl restart application.service
 000000
 sudo systemctl daemon-reload
