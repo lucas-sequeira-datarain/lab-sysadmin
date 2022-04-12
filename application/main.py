@@ -2,7 +2,7 @@ from flask import Flask, Response, redirect, make_response
 from src.metrics import get_ec2_metrics
 import pyexcel as pe
 from io import StringIO
-import flask_cors as CORS
+from flask_cors import CORS
 
 # EB looks for an 'app' callable by default.
 app = Flask(__name__)
