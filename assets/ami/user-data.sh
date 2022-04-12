@@ -2,6 +2,7 @@
 source lab-sysadmin-env/bin/activate
 
 # Clone repo
+sudo rm -r lab-sysadmin
 git clone https://github.com/lucas-sequeira-datarain/lab-sysadmin.git
 cd lab-sysadmin
 
@@ -16,6 +17,10 @@ cd ~/lab-sysadmin
 
 # Configure Nginx
 
+# Configuration
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
 # .conf file
 sudo cp assets/ami/application.conf /etc/nginx/sites-available/application.conf
 sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
@@ -24,6 +29,4 @@ sudo systemctl restart nginx
 # .service file
 sudo cp assets/ami/application.service /etc/systemd/system/application.service
 sudo systemctl restart application.service
-000000
 sudo systemctl daemon-reload
-000000
