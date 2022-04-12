@@ -32,17 +32,15 @@ echo "[CONFIGURING NGINX .CONF]"
 sudo rm -r /etc/nginx/sites-available/application.conf
 sudo cp ~/lab-sysadmin/assets/ami/application.conf /etc/nginx/sites-available/application.conf
 sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
-sudo systemctl restart nginx
 
 # .service file
 echo "[CONFIGURING NGINX .SERVICE]"
 sudo rm -r /etc/systemd/system/application.service
 sudo cp ~/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
-sudo systemctl restart application.service
-sudo systemctl daemon-reload
-sudo systemctl restart application
 
 # App
 echo "[STARTING APP]"
-sudo systemctl start application
+sudo systemctl daemon-reload
+sudo systemctl restart nginx
+sudo systemctl restart application
 sudo systemctl enable application
