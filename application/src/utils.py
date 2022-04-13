@@ -1,6 +1,11 @@
 import socket
 import os
+import pandas as pd
 
+# CONSTANTS
+METRICS_CSV_PATH = './../../../metrics.csv'
+
+# BASH
 
 def execute_bash_command(cmd) -> str:
     """
@@ -14,6 +19,8 @@ def execute_bash_command(cmd) -> str:
     output = stream.read().strip()
 
     return output
+
+# METRICS
 
 def get_num_processes() -> dict:
     """
@@ -144,9 +151,41 @@ def get_timestamp() -> dict:
 
     return metrics
 
-def get_ec2_metrics():
+def update_metrics():
     """
-    This method returns data of ec2 metrics
+    This method queries all metrics and update the local csv data
+    """
+
+    # Bool to check if the metrics csv file exists
+    metrics_csv_exists = os.path.isfile(METRICS_CSV_PATH)
+
+    # Load the metrics csv (if exists)
+    if metrics_csv_exists:
+        metrics_df = pd.read_csv(METRICS_CSV_PATH)
+
+    # Get the metrics
+    metrics_data = get_metrics()
+
+    # Get the metric names and values
+    metric_names = metrics_data['MetricNames']
+    metric_values = metrics_data['MetricValues']
+
+    # Add the metrics to the dataframe
+    if not metrics_csv_exists:
+        metrics_df = pd.DataFrame(columns=metric_names)
+    
+    # Double check df col order
+    metrics_df = metrics_df[metric_names]
+    
+    # Add the metric values
+    metrics_df.loc[len(metrics_df)] = metric_values
+
+    # Save the metrics csv
+    metrics_df.to_csv(METRICS_CSV_PATH, index=False)
+
+def get_metrics() -> dict:
+    """
+    Return the instance metrics
     """
 
     # Get all metrics
@@ -176,14 +215,32 @@ def get_ec2_metrics():
     # Set metric values
     metric_values = [metrics[name] for name in metric_names]
 
+    return {
+        "MetricNames": metric_names,
+        "MetricValues": metric_values,
+    }
+
+
+def prepare_metrics() -> list:
+    """
+    This method returns data of ec2 metrics
+    """
+
+    # Get csv metrics
+    metrics_df = pd.read_csv(METRICS_CSV_PATH)
+
+    # Set names
     data = [
-        metric_names,
-        metric_values,
+        list(metrics_df.columns)
     ]
+
+    # Get the metrics
+    for _, row in metrics_df.iterrows():
+        data.append(list(row))
 
     return data
 
-def get_private_ip():
+def get_private_ip() -> dict:
     """
     Get the private IP address of the instance.
     """
@@ -195,3 +252,5 @@ def get_private_ip():
     return {
         "PrivateIP": private_ip,
     }
+
+# METRICS MANAGEMENT

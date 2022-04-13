@@ -1,5 +1,5 @@
 from flask import Flask, Response, redirect, make_response
-from src.utils import get_ec2_metrics, get_private_ip
+from src.utils import prepare_metrics, get_private_ip
 import pyexcel as pe
 from io import StringIO
 from flask_cors import CORS
@@ -36,7 +36,11 @@ def health():
 def metrics():
 
     # Get EC2 Metrics
-    data = get_ec2_metrics()
+    try:
+        data = prepare_metrics()
+    except Exception as e:
+        print(e)
+        raise Exception('Error getting metrics. Maybe the metrics csv is not created yet.')
 
     # Create Response
     sheet = pe.Sheet(data)
