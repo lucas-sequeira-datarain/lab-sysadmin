@@ -1,3 +1,5 @@
+import os
+
 def get_ec2_metrics():
     """
     This method returns data of ec2 metrics
@@ -19,3 +21,14 @@ def get_ec2_metrics():
     ]
 
     return data
+
+def get_private_ip():
+    """
+    Get the private IP address of the instance.
+    """
+
+    # Get the private IP (from hostname)
+    hostname = str(os.system("hostname")) # hostname: ip-10-0-0-0
+    ec2_private_ip = '.'.join(hostname.split('-')[1:]) # ip: 10.0.0.0
+
+    return ec2_private_ip

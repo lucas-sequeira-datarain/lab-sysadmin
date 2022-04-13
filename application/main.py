@@ -1,9 +1,8 @@
 from flask import Flask, Response, redirect, make_response
-from src.metrics import get_ec2_metrics
+from src.utils import get_ec2_metrics, get_private_ip
 import pyexcel as pe
 from io import StringIO
 from flask_cors import CORS
-import os
 
 # EB looks for an 'app' callable by default.
 app = Flask(__name__)
@@ -14,20 +13,23 @@ CORS(app)
 def home():
     resp = Response("Home")
 
-    # Get the private IP (from hostname)
-    hostname = str(os.system("hostname")) # hostname: ip-10-0-0-0
-    ec2_private_ip = '.'.join(hostname.split('-')[1:]) # ip: 10.0.0.0
-    print("Private IP: " + ec2_private_ip)
+    # Get Private IP
+    private_ip = get_private_ip()
+    resp = Response(f"Home: {private_ip}")
 
     # Add to header
-    resp.headers['X-Private-IP'] = ec2_private_ip
-    resp.headers['test'] = '121231'
+    resp.headers['X-Private-IP'] = private_ip
     return resp
 
 # Health Check
 @app.route('/health')
 def health():
-    return Response("Healthy")
+
+    # Get Private IP
+    private_ip = get_private_ip()
+    resp = Response(f"Healthy: {private_ip}")
+
+    return resp
 
 # Metrics
 @app.route('/metrics')
