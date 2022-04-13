@@ -44,7 +44,7 @@ sudo systemctl status application
 # sudo systemctl enable application
 
 # Configuration
-echo "[INTIALIZING NGINX]"
+# echo "[INTIALIZING NGINX]"
 # sudo systemctl daemon-reload
 # sudo rm -r /etc/nginx/sites-available/default
 # sudo rm -r /etc/nginx/sites-enabled/default
@@ -53,3 +53,8 @@ echo "[INTIALIZING NGINX]"
 # sudo cp /home/ubuntu/lab-sysadmin/assets/ami/nginx.default.conf /etc/nginx/sites-available/default
 # sudo cp /home/ubuntu/lab-sysadmin/assets/ami/nginx.default.conf /etc/nginx/sites-enabled/default
 
+echo "[STARTING CRAWLER]"
+cd /home/ubuntu
+source lab-sysadmin-env/bin/activate
+cd /home/ubuntu/lab-sysadmin/application
+python metrics_crawler.py
