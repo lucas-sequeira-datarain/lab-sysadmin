@@ -22,7 +22,7 @@ sudo systemctl enable application
 echo "[CONFIGURING APP .CONF]"
 sudo rm -r /etc/nginx/sites-available/application.conf
 sudo rm -r /etc/nginx/sites-enabled/application.conf
-sudo cp /home/ubuntu/lab-sysadmin/assets/ami/nginx.default.conf /etc/nginx/sites-available/default
+sudo cp /home/ubuntu/lab-sysadmin/assets/ami/application.conf /etc/nginx/sites-available/application.conf
 sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
 
 # App
