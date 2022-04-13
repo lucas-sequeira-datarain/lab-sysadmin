@@ -1,3 +1,7 @@
+# Run (on /assets/templates/vpc/):
+#    sam build
+#    sam deploy --guided --profile lab-sys.admin_mfa --capabilities CAPABILITY_NAMED_IAM
+
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
@@ -32,6 +36,10 @@ Parameters:
     Description: Name of the SSH key pair to use for the instances.
     Type: String
     Default: lab-sysadmin
+  AppAlarmSNSARN:
+    Description: SNS ARN to send CloudWatch Alarms to.
+    Type: String
+    Default: arn:aws:sns:us-east-1:685463979595:LucasSNSTopic
 
 # Este modelo do CloudFormation implanta uma VPC / Rede básica.
 Resources:
@@ -222,12 +230,13 @@ Resources:
       - Key: Name
         Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PublicRT" ]]
         
-  AppPublicRoute1:   # A tabela de rotas públicas têm roteamento direto para o IGW:
+  AppPublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AppAttachGateway
     Properties:
       RouteTableId: !Ref AppPublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
+      # Rotear o tráfego através do Internet Gateway:
       GatewayId: !Ref AppInternetGateway
 
   # Route Tables (Private)
@@ -238,12 +247,13 @@ Resources:
       Tags:
       - Key: Name
         Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PrivateRT" ]]
-  AppPrivateRoute1:           # A tabela de rota privada pode acessar a web via NAT (criada abaixo)
+
+  AppPrivateRoute:
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref AppPrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      # Rotear o tráfego através do Gateway NAT:
+      # Rotear o tráfego através do NAT Gateway:
       NatGatewayId: !Ref AppNATGateway
 
   # A NAT Gateway:
@@ -386,11 +396,11 @@ Resources:
     Type: AWS::EC2::Instance
     DependsOn: 
       - AppBastionHostSG
-      - AppServerInstanceProfile
+      - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppBastionHostImageId
       InstanceType: !Ref AppBastionHostInstanceType
-      IamInstanceProfile: !Ref AppServerInstanceProfile
+      IamInstanceProfile: !Ref AppInstanceProfileRole
       KeyName: !Ref AppKeyName
       SecurityGroupIds:
         - !Ref AppBastionHostSG
@@ -404,11 +414,11 @@ Resources:
     DependsOn: 
       - AppServerBastionSG
       - AppServerSG
-      - AppServerInstanceProfile
+      - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppServerImageId
       InstanceType: !Ref AppServerInstanceType
-      IamInstanceProfile: !Ref AppServerInstanceProfile
+      IamInstanceProfile: !Ref AppInstanceProfileRole
       KeyName: !Ref AppKeyName
       SecurityGroupIds:
         - !Ref AppServerBastionSG
@@ -429,11 +439,11 @@ Resources:
     DependsOn: 
       - AppServerBastionSG
       - AppServerSG
-      - AppServerInstanceProfile
+      - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppServerImageId
       InstanceType: !Ref AppServerInstanceType
-      IamInstanceProfile: !Ref AppServerInstanceProfile
+      IamInstanceProfile: !Ref AppInstanceProfileRole
       KeyName: !Ref AppKeyName
       SecurityGroupIds:
         - !Ref AppServerBastionSG
@@ -465,7 +475,7 @@ Resources:
         - Id: !Ref AppServerInstanceB
 
   # Load Balancer
-  AppLoadBalancer:
+  AppApplicationLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     DependsOn:
       - AppTargetGroup
@@ -487,7 +497,7 @@ Resources:
     DependsOn:
       - AppTargetGroup
     Properties:
-      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      LoadBalancerArn: !Ref AppApplicationLoadBalancer
       Port: 80
       Protocol: HTTP
       DefaultActions:
@@ -499,7 +509,7 @@ Resources:
     DependsOn:
       - AppTargetGroup
     Properties:
-      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      LoadBalancerArn: !Ref AppApplicationLoadBalancer
       Port: 443
       Protocol: HTTPS
       DefaultActions:
@@ -531,3 +541,95 @@ Resources:
       ManagedPolicyArns: 
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
       RoleName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "InstanceProfileRole" ]]
+
+Outputs:
+  AppBastionHostEIP:
+    Value: !Ref AppBastionHostEIP
+    Export:
+      Name: AppBastionHostEIP
+  AppBastionHostInstance:
+    Value: !Ref AppBastionHostInstance
+    Export:
+      Name: AppBastionHostInstance
+  AppServerInstanceA:
+    Value: !Ref AppServerInstanceA
+    Export:
+      Name: AppServerInstanceA
+  AppServerInstanceB:
+    Value: !Ref AppServerInstanceB
+    Export:
+      Name: AppServerInstanceB
+  AppTargetGroup:
+    Value: !Ref AppTargetGroup
+    Export:
+      Name: AppTargetGroup
+  AppApplicationLoadBalancer:
+    Value: !Ref AppApplicationLoadBalancer
+    Export:
+      Name: AppApplicationLoadBalancer
+  AppInstanceProfileRole:
+    Value: !Ref AppInstanceProfileRole
+    Export:
+      Name: AppInstanceProfileRole
+  AppVPC:
+    Value: !Ref AppVPC
+    Export:
+      Name: AppVPC
+  AppPublicNACL:
+    Value: !Ref AppPublicNACL
+    Export:
+      Name: AppPublicNACL
+  AppPrivateNACL:
+    Value: !Ref AppPrivateNACL
+    Export:
+      Name: AppPrivateNACL
+  AppPublicRouteTable:
+    Value: !Ref AppPublicRouteTable
+    Export:
+      Name: AppPublicRouteTable
+  AppPrivateRouteTable:
+    Value: !Ref AppPrivateRouteTable
+    Export:
+      Name: AppPrivateRouteTable
+  AppPublicSubnetA:
+    Value: !Ref AppPublicSubnetA
+    Export:
+      Name: AppPublicSubnetA
+  AppPublicSubnetB:
+    Value: !Ref AppPublicSubnetB
+    Export:
+      Name: AppPublicSubnetB
+  AppPublicSubnetC:
+    Value: !Ref AppPublicSubnetC
+    Export:
+      Name: AppPublicSubnetC
+  AppPrivateSubnetA:
+    Value: !Ref AppPrivateSubnetA
+    Export:
+      Name: AppPrivateSubnetA
+  AppPrivateSubnetB:
+    Value: !Ref AppPrivateSubnetB
+    Export:
+      Name: AppPrivateSubnetB
+  AppPrivateSubnetC:
+    Value: !Ref AppPrivateSubnetC
+    Export:
+      Name: AppPrivateSubnetC
+  AppBastionHostSG:
+    Value: !Ref AppBastionHostSG
+    Export:
+      Name: AppBastionHostSG
+  AppServerSG:
+    Value: !Ref AppServerSG
+    Export:
+      Name: AppServerSG
+  AppServerBastionSG:
+    Value: !Ref AppServerBastionSG
+    Export:
+      Name: AppServerBastionSG
+  AppLoadBalancerSG:
+    Value: !Ref AppLoadBalancerSG
+    Export:
+      Name: AppLoadBalancerSG
+
+  

@@ -7,6 +7,6 @@ s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-rp5ceuqlte1e"
 s3_prefix = "lsequeira"
 region = "us-east-1"
 profile = "lab-sys.admin_mfa"
-capabilities = "CAPABILITY_IAM"
+capabilities = "CAPABILITY_NAMED_IAM"
 image_repositories = []
-parameter_overrides = "AppVPCCidr=\"10.0.0.0/16\" AppStage=\"dev\" AppInternetIpAccess=\"201.92.135.240\" AppServerImageId=\"ami-02e8df324a09fe4a9\" AppBastionHostImageId=\"ami-03ededff12e34e59e\" AppBastionHostInstanceType=\"t2.micro\" AppServerInstanceType=\"t2.micro\" AppKeyName=\"lab-sysadmin\""
+parameter_overrides = "AppVPCCidr=\"10.0.0.0/16\" AppStage=\"dev\" AppInternetIpAccess=\"201.92.135.240\" AppServerImageId=\"ami-02e8df324a09fe4a9\" AppBastionHostImageId=\"ami-03ededff12e34e59e\" AppBastionHostInstanceType=\"t2.micro\" AppServerInstanceType=\"t2.micro\" AppKeyName=\"lab-sysadmin\" AppAlarmSNSARN=\"arn:aws:sns:us-east-1:685463979595:LucasSNSTopic\""
