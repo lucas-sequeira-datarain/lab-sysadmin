@@ -24,10 +24,12 @@ echo "[CONFIGURING APP .SERVICE]"
 sudo cp /home/ubuntu/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
 sudo systemctl daemon-reload
 sudo systemctl start application
-sudo systemctl status application
+
 
 # App
 echo "[STARTING APP]"
+sudo systemctl restart application
+sudo systemctl status application
 # sudo systemctl daemon-reload
 # sudo systemctl restart nginx
 # sudo systemctl restart application
