@@ -14,7 +14,7 @@ def home():
     resp = Response("Home")
 
     # Get Private IP
-    private_ip = get_private_ip()
+    private_ip = get_private_ip()['PrivateIP']
     resp = Response(f"Home: {private_ip}")
 
     # Add to header
@@ -26,7 +26,7 @@ def home():
 def health():
 
     # Get Private IP
-    private_ip = get_private_ip()
+    private_ip = get_private_ip()['PrivateIP']
     resp = Response(f"Healthy: {private_ip}")
 
     return resp
