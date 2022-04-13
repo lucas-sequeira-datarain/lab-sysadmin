@@ -2,7 +2,7 @@ from src.utils import update_metrics
 from time import sleep
 
 # Constants
-SLEEP_TIME = 300 # seconds
+SLEEP_TIME = 5 # seconds
 
 # Main
 if __name__ == "__main__":
