@@ -521,7 +521,7 @@ Resources:
               - 'sts:AssumeRole'
       Description: Role to provide access to S3
       Policies:
-        - PolicyName: EmbeddedInlinePolicy
+        - PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "InstanceProfileInlinePolicy" ]]
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -530,4 +530,4 @@ Resources:
                 Resource: '*'
       ManagedPolicyArns: 
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
-      RoleName: LambdaS3Access
+      RoleName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "InstanceProfileRole" ]]
