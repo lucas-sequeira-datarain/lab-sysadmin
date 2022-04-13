@@ -1,0 +1,533 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  AppVPCCidr:
+    Type: String
+    Default: 10.0.0.0/16
+  AppStage:
+    Type: String
+    Default: dev
+  AppInternetIpAccess:
+    Type: String
+    Default: 201.92.135.240
+  AppServerImageId:
+    Description: App Server Image ID for Application base EC2 instance.
+    Type: AWS::EC2::Image::Id
+    Default: ami-02e8df324a09fe4a9 # Ubuntu 20 + Nginx + Python (Custom AMI)
+  AppBastionHostImageId:
+    Description: App Bastion Host Image ID base EC2 instance.
+    Type: AWS::EC2::Image::Id
+    Default: ami-03ededff12e34e59e # Amazon Linux AMI 2015.09.0
+  AppBastionHostInstanceType:
+    Description: Instance type to launch Baction Host EC2 instance.
+    Type: String
+    Default: t2.micro
+    AllowedValues: [ t2.micro, t2.small ]
+  AppServerInstanceType:
+    Description: Instance type to launch Server EC2 instances.
+    Type: String
+    Default: t2.micro
+    AllowedValues: [ t2.micro, t2.small ]
+  AppKeyName:
+    Description: Name of the SSH key pair to use for the instances.
+    Type: String
+    Default: lab-sysadmin
+
+# Este modelo do CloudFormation implanta uma VPC / Rede básica.
+Resources:
+  # VPC:
+  AppVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref AppVPCCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "VPC" ]]
+
+  # NACLs
+  AppPublicNACL:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId:
+        Ref: AppVPC
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PublicNACL" ]]
+  
+  AppPublicNACLEntryIngress:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      CidrBlock: 0.0.0.0/0
+      Egress: false
+      NetworkAclId: !Ref AppPublicNACL
+      Protocol: -1
+      RuleAction: allow
+      RuleNumber: 100
+  
+  AppPublicNACLEntryEgress:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      CidrBlock: 0.0.0.0/0
+      Egress: true
+      NetworkAclId: !Ref AppPublicNACL
+      Protocol: -1
+      RuleAction: allow
+      RuleNumber: 100
+  
+  AppPrivateNACL:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId:
+        Ref: AppVPC
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PrivateNACL" ]]
+  
+  AppPrivateNACLEntryIngress:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      CidrBlock: !Ref AppVPCCidr
+      Egress: true
+      NetworkAclId: !Ref AppPrivateNACL
+      Protocol: -1
+      RuleAction: allow
+      RuleNumber: 100
+  
+  AppPrivateNACLEntryEgress:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties: 
+      CidrBlock: !Ref AppVPCCidr
+      Egress: false
+      NetworkAclId: !Ref AppPrivateNACL
+      Protocol: -1
+      RuleAction: allow
+      RuleNumber: 100
+    
+  # Internet Gateway:    
+  AppInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: AppVPC
+  AppAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+     # Observe como você não pode anexar um IGW a um VPC, a menos que ambos sejam criados:
+    Properties:
+      VpcId: !Ref AppVPC
+      InternetGatewayId: !Ref AppInternetGateway
+  
+  # Subnets
+  AppPublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref AppVPC
+      CidrBlock: 10.0.10.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PublicSubnet-A" ]]
+
+  AppPublicSubnetAAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties: 
+      NetworkAclId: !Ref AppPublicNACL
+      SubnetId: !Ref AppPublicSubnetA
+  
+  AppPublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref AppVPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs ]
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PublicSubnet-B" ]]
+
+  AppPublicSubnetBAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties: 
+      NetworkAclId: !Ref AppPublicNACL
+      SubnetId: !Ref AppPublicSubnetB
+  
+  AppPublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref AppVPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: !Select [ 2, !GetAZs ]
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PublicSubnet-C" ]]
+  
+  AppPublicSubnetCAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties: 
+      NetworkAclId: !Ref AppPublicNACL
+      SubnetId: !Ref AppPublicSubnetC
+  
+  AppPrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref AppVPC
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PrivateSubnet-A" ]]
+  
+  AppPrivateSubnetAAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties: 
+      NetworkAclId: !Ref AppPrivateNACL
+      SubnetId: !Ref AppPrivateSubnetA
+  
+  AppPrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref AppVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs ]
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PrivateSubnet-B" ]]
+  
+  AppPrivateSubnetBAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties: 
+      NetworkAclId: !Ref AppPrivateNACL
+      SubnetId: !Ref AppPrivateSubnetB
+  
+  AppPrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref AppVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 2, !GetAZs ]
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PrivateSubnet-C" ]]
+  
+  AppPrivateSubnetCAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties: 
+      NetworkAclId: !Ref AppPrivateNACL
+      SubnetId: !Ref AppPrivateSubnetC
+
+  # Route Tables (Public)
+  AppPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref AppVPC
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PublicRT" ]]
+        
+  AppPublicRoute1:   # A tabela de rotas públicas têm roteamento direto para o IGW:
+    Type: AWS::EC2::Route
+    DependsOn: AppAttachGateway
+    Properties:
+      RouteTableId: !Ref AppPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref AppInternetGateway
+
+  # Route Tables (Private)
+  AppPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref AppVPC
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "PrivateRT" ]]
+  AppPrivateRoute1:           # A tabela de rota privada pode acessar a web via NAT (criada abaixo)
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref AppPrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      # Rotear o tráfego através do Gateway NAT:
+      NatGatewayId: !Ref AppNATGateway
+
+  # A NAT Gateway:
+  AppNATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt AppElasticIPAddress.AllocationId
+      SubnetId: !Ref AppPublicSubnetC
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "NAT" ]]
+        
+  AppElasticIPAddress:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: AppVPC
+  
+  # Anexar as sub-redes públicas às tabelas de rotas públicas
+  # e anexar as sub-redes privadas às tabelas de rotas privadas:     
+  AppPublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref AppPublicSubnetA
+      RouteTableId: !Ref AppPublicRouteTable
+  AppPublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref AppPublicSubnetB
+      RouteTableId: !Ref AppPublicRouteTable
+  AppPublicSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref AppPublicSubnetC
+      RouteTableId: !Ref AppPublicRouteTable
+  AppPrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref AppPrivateSubnetA
+      RouteTableId: !Ref AppPrivateRouteTable
+  AppPrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref AppPrivateSubnetB
+      RouteTableId: !Ref AppPrivateRouteTable
+  AppPrivateSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref AppPrivateSubnetC
+      RouteTableId: !Ref AppPrivateRouteTable
+
+  # Security Groups
+  AppBastionHostSG:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: AppVPC
+    Properties:
+      GroupDescription: Allow SSH to Bastion Host
+      VpcId: !Ref AppVPC
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "BastionHostSG" ]]
+
+  AppLoadBalancerSG:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: AppVPC
+    Properties:
+      GroupDescription: Allow All Traffic from internet (IP Lucas)
+      VpcId: !Ref AppVPC
+      SecurityGroupIngress:
+        - CidrIp: !Join ['/', [!Ref AppInternetIpAccess, '32']]
+          IpProtocol: -1
+          Description: IP Lucas
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "LoadBalancerSG" ]]
+
+  AppServerSG:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: 
+      - AppVPC
+      - AppLoadBalancerSG
+    Properties:
+      GroupDescription: Allow All Traffic from LoadBalancerSG and Internal VPC
+      VpcId: !Ref AppVPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref AppLoadBalancerSG
+          IpProtocol: -1
+        - CidrIp: !Ref AppVPCCidr
+          IpProtocol: -1
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ServerSG" ]]
+
+  AppServerBastionSG:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: 
+      - AppVPC
+      - AppBastionHostSG
+    Properties:
+      GroupDescription: Allow SSH from BastionHostSG
+      VpcId: !Ref AppVPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref AppBastionHostSG
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ServerBastionSG" ]]
+
+  # EC2 Instances
+  AppBastionHostEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: 
+      - AppVPC
+    Properties:
+      Domain: Vpc
+      InstanceId: !Ref AppBastionHostInstance
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "BastionHostEIP" ]]
+
+  AppBastionHostInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: 
+      - AppBastionHostSG
+      - AppServerInstanceProfile
+    Properties:
+      ImageId: !Ref AppBastionHostImageId
+      InstanceType: !Ref AppBastionHostInstanceType
+      IamInstanceProfile: !Ref AppServerInstanceProfile
+      KeyName: !Ref AppKeyName
+      SecurityGroupIds:
+        - !Ref AppBastionHostSG
+      SubnetId: !Ref AppPublicSubnetC
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "BastionHostInstance" ]]
+  
+  AppServerInstanceA:
+    Type: AWS::EC2::Instance
+    DependsOn: 
+      - AppServerBastionSG
+      - AppServerSG
+      - AppServerInstanceProfile
+    Properties:
+      ImageId: !Ref AppServerImageId
+      InstanceType: !Ref AppServerInstanceType
+      IamInstanceProfile: !Ref AppServerInstanceProfile
+      KeyName: !Ref AppKeyName
+      SecurityGroupIds:
+        - !Ref AppServerBastionSG
+        - !Ref AppServerSG
+      SubnetId: !Ref AppPrivateSubnetA
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ServerInstanceA" ]]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          sudo rm -r lab-sysadmin
+          git clone https://github.com/lucas-sequeira-datarain/lab-sysadmin.git
+          bash lab-sysadmin/assets/ami/install-app.sh
+  
+  AppServerInstanceB:
+    Type: AWS::EC2::Instance
+    DependsOn: 
+      - AppServerBastionSG
+      - AppServerSG
+      - AppServerInstanceProfile
+    Properties:
+      ImageId: !Ref AppServerImageId
+      InstanceType: !Ref AppServerInstanceType
+      IamInstanceProfile: !Ref AppServerInstanceProfile
+      KeyName: !Ref AppKeyName
+      SecurityGroupIds:
+        - !Ref AppServerBastionSG
+        - !Ref AppServerSG
+      SubnetId: !Ref AppPrivateSubnetB
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ServerInstanceB" ]]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          sudo rm -r lab-sysadmin
+          git clone https://github.com/lucas-sequeira-datarain/lab-sysadmin.git
+          bash lab-sysadmin/assets/ami/install-app.sh
+  
+  # Target Group
+  AppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn:
+      - AppServerInstanceA
+      - AppServerInstanceB
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckPath: /health
+      Name: AppTargetGroup
+      TargetType: instance
+      Targets:
+        - Id: !Ref AppServerInstanceA
+        - Id: !Ref AppServerInstanceB
+
+  # Load Balancer
+  AppLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DependsOn:
+      - AppTargetGroup
+    Properties:
+      Name: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "LoadBalancer" ]]
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref AppLoadBalancerSG
+      Subnets:
+        - !Ref AppPublicSubnetA
+        - !Ref AppPublicSubnetB
+        - !Ref AppPublicSubnetC
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "LoadBalancer" ]]
+  
+  AppHTTPListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn:
+      - AppTargetGroup
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref AppTargetGroup
+  
+  AppHTTPSListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn:
+      - AppTargetGroup
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref AppTargetGroup
+
+  # Instance Profile
+  AppInstanceProfileRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: Role to provide access to S3
+      Policies:
+        - PolicyName: EmbeddedInlinePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 'cloudformation:*'
+                Resource: '*'
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      RoleName: LambdaS3Access
