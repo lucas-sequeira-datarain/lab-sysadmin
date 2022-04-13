@@ -96,7 +96,7 @@ def get_memory_utilization() -> dict:
         value = infos[1].strip() # value: 0 kB
 
         # Convert to MB
-        value = int(value.split(' ')[0]) / 1024 # value: 0
+        value = int(value.split(' ')[0]) // 1024 # value: 0
         value = f'{value}MB' # value: 0MB
 
         # Add to metrics
