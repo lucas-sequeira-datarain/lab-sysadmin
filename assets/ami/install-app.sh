@@ -11,19 +11,22 @@ git pull
 echo "[UPDATE DEPENDENCIES]"
 pip3 install -r application/requirements.txt
 
-# .service file
-echo "[CONFIGURING APP .SERVICE]"
-sudo rm -r /etc/systemd/system/application.service
-sudo cp /home/ubuntu/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
-sudo systemctl start application
-sudo systemctl enable application
-
 # .conf file
 echo "[CONFIGURING APP .CONF]"
-sudo rm -r /etc/nginx/sites-available/application.conf
-sudo rm -r /etc/nginx/sites-enabled/application.conf
-sudo cp /home/ubuntu/lab-sysadmin/assets/ami/application.conf /etc/nginx/sites-available/application.conf
-sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
+sudo rm -r /etc/nginx/sites-enabled
+sudo mkdir /etc/nginx/sites-enabled
+sudo cp /home/ubuntu/lab-sysadmin/assets/ami/application /etc/nginx/sites-enabled/application
+sudo service nginx restart
+# sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
+
+# .service file
+echo "[CONFIGURING APP .SERVICE]"
+sudo cp /home/ubuntu/lab-sysadmin/assets/ami/application.service /etc/systemd/system/application.service
+sudo systemctl daemon-reload
+sudo systemctl start application
+sudo systemctl status application
+
+
 
 # App
 echo "[STARTING APP]"

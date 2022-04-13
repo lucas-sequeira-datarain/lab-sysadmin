@@ -7,6 +7,3 @@ User=ubuntu
 Group=www-data
 WorkingDirectory=/home/ubuntu/lab-sysadmin/application
 ExecStart=/home/ubuntu/lab-sysadmin-env/bin/gunicorn --workers 3 --bind unix:application.sock -m 007 wsgi:app
- 
-[Install]
-WantedBy=multi-user.target
