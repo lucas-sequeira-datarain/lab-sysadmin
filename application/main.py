@@ -40,7 +40,9 @@ def metrics():
         data = prepare_metrics()
     except Exception as e:
         print(e)
-        raise Exception('Error getting metrics. Maybe the metrics csv is not created yet.')
+        error = f"Error getting metrics. Maybe the metrics csv is not created yet."
+        resp = Response(error)
+        return resp
 
     # Create Response
     sheet = pe.Sheet(data)
