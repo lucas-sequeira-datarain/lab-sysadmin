@@ -15,10 +15,8 @@ def home():
     resp = Response("Home")
 
     # Get the private IP (from hostname)
-    hostname = os.system("hostname") # hostname: ip-10-0-0-0
-    print(hostname)
-    # ec2_private_ip = '.'.join(hostname.split('-')[1:]) # ip: 10.0.0.0
-    ec2_private_ip = '1.0.0.0'
+    hostname = str(os.system("hostname")) # hostname: ip-10-0-0-0
+    ec2_private_ip = '.'.join(hostname.split('-')[1:]) # ip: 10.0.0.0
 
     # Add to header
     resp.headers['X-Private-IP'] = ec2_private_ip
