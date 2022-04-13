@@ -29,7 +29,7 @@ sudo ln -s /etc/nginx/sites-available/application.conf /etc/nginx/sites-enabled/
 sudo rm -r /etc/nginx/sites-available/default
 sudo rm -r /etc/nginx/sites-enabled/default
 sudo cp /home/ubuntu/lab-sysadmin/assets/ami/application.conf /etc/nginx/sites-available/application.conf
-sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
 # App
 echo "[STARTING APP]"
