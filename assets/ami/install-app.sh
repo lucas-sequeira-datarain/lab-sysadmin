@@ -36,7 +36,7 @@ sudo systemctl start application
 # App
 echo "[STARTING APP]"
 sudo systemctl restart application
-sudo systemctl status application
+# sudo systemctl status application
 # sudo systemctl daemon-reload
 # sudo systemctl restart nginx
 # sudo systemctl restart application
@@ -57,4 +57,4 @@ echo "[STARTING CRAWLER]"
 cd /home/ubuntu
 source lab-sysadmin-env/bin/activate
 cd /home/ubuntu/lab-sysadmin/application
-python metrics_crawler.py
+nohup python metrics_crawler.py &
