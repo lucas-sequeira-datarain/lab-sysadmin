@@ -1,4 +1,4 @@
-import os
+import socket
 
 def get_ec2_metrics():
     """
@@ -28,6 +28,7 @@ def get_private_ip():
     """
 
     # Get the private IP (from hostname)
-    private_ip = os.system("hostname -I") # hostname: 10.0.0.0
+    hostname = str(socket.gethostname()) # hostname: ip-10-0-0-0
+    private_ip = '.'.join(hostname.split('-')[1:]) # ip: 10.0.0.0
 
     return private_ip
