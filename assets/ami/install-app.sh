@@ -2,10 +2,17 @@
 echo "[ACTIVATE ENVIRONMENT]"
 source lab-sysadmin-env/bin/activate
 
+# Create lab-sysadmin-data folder (if not exists)
+echo "[CREATE FOLDERS]"
+mkdir -p /home/ubuntu/lab-sysadmin/lab-sysadmin-data
+cd /home/ubuntu
+chmod 755 lab-sysadmin-data/
+
 # Update repo
 echo "[UPDATE REPOSITORY]"
 cd /home/ubuntu/lab-sysadmin
 git pull
+
 
 # Install dependencies
 echo "[UPDATE DEPENDENCIES]"

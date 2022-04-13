@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 # CONSTANTS
-METRICS_CSV_PATH = './../../data/metrics.csv'
+METRICS_CSV_PATH = './../../lab-sysadmin-data/metrics.csv'
 
 # BASH
 
