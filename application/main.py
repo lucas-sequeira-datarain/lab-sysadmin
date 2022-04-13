@@ -44,12 +44,15 @@ def metrics():
         resp = Response(error)
         return resp
 
+    # Get Private IP
+    private_ip = get_private_ip()['PrivateIP']
+
     # Create Response
     sheet = pe.Sheet(data)
     io = StringIO()
     sheet.save_to_memory("csv", io)
     output = make_response(io.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=metrics.csv"
+    output.headers["Content-Disposition"] = f"attachment; filename=metrics_ip={private_ip}.csv"
     output.headers["Content-type"] = "text/csv"
     return output
 
