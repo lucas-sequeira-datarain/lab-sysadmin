@@ -71,7 +71,13 @@ def get_memory_utilization() -> dict:
 
     # Get the Swap memory
     cmd = """egrep 'Mem|Cache|Swap' /proc/meminfo"""
-    memories = execute_bash_command(cmd) # SwapCached:            0 kB\nSwapTotal:             0 kB\nSwapFree:              0 kB
+
+    # Returns
+    # MemTotal:         988680 kB
+    # ......
+    # SwapFree:              0 kB
+
+    memories = execute_bash_command(cmd)
 
     # Split into memory datas
     memories_datas = memories.split('\n')
@@ -88,7 +94,10 @@ def get_memory_utilization() -> dict:
         # Get the memory data
         name = infos[0].strip()
         value = infos[1].strip() # value: 0 kB
-        value = value.replace(' ', '') # value: 0kB
+
+        # Convert to MB
+        value = int(value.split(' ')[0]) / 1024 # value: 0
+        value = f'{value}MB' # value: 0MB
 
         # Add to metrics
         metrics[name] = value
@@ -98,11 +107,11 @@ def get_memory_utilization() -> dict:
 def get_disk_utilization() -> dict:
 
     # Get the disk utilization
-    cmd = """df -T -h /dev/root"""
+    cmd = """df -h --total | sed -n '1p;$p'"""
 
     # Return
-    # Filesystem     Type  Size  Used Avail Use% Mounted on
-    # /dev/root      ext4  7.7G  2.5G  5.3G  32% /
+    # Filesystem      Size  Used Avail Use% Mounted on
+    # total            10G  2.2G  7.9G  22% -
 
     disk_utilization = execute_bash_command(cmd) 
 
