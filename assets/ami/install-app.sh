@@ -26,8 +26,6 @@ sudo systemctl daemon-reload
 sudo systemctl start application
 sudo systemctl status application
 
-
-
 # App
 echo "[STARTING APP]"
 # sudo systemctl daemon-reload
@@ -38,10 +36,10 @@ echo "[STARTING APP]"
 
 # Configuration
 echo "[INTIALIZING NGINX]"
-sudo systemctl daemon-reload
+# sudo systemctl daemon-reload
 # sudo rm -r /etc/nginx/sites-available/default
 # sudo rm -r /etc/nginx/sites-enabled/default
-sudo systemctl restart nginx
+# sudo systemctl restart nginx
 
 # sudo cp /home/ubuntu/lab-sysadmin/assets/ami/nginx.default.conf /etc/nginx/sites-available/default
 # sudo cp /home/ubuntu/lab-sysadmin/assets/ami/nginx.default.conf /etc/nginx/sites-enabled/default
