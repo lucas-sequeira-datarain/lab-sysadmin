@@ -17,9 +17,11 @@ def home():
     # Get the private IP (from hostname)
     hostname = str(os.system("hostname")) # hostname: ip-10-0-0-0
     ec2_private_ip = '.'.join(hostname.split('-')[1:]) # ip: 10.0.0.0
+    print("Private IP: " + ec2_private_ip)
 
     # Add to header
     resp.headers['X-Private-IP'] = ec2_private_ip
+    resp.headers['test'] = '121231'
     return resp
 
 # Health Check
