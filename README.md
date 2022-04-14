@@ -108,3 +108,9 @@ Parameters:
     Default: dev
 (...)
 ```
+
+The solution used to develop the application itself was to create an [AMI](/assets/ami/install-ami.sh) on Ubuntu with Python and Nginx installed. The application is installed using [User Data](/assets/ami/user-data.sh), which clones the repository and runs the application installation.
+
+The application runs on Flask + Nginx exposing port 80. The routes were all configured in the [main.py](/application/main.py) script. In particular, the "/metrics" route reads a file on the instance's local disk that contains the metric values updated every 5 minutes.
+
+To constantly capture metrics, a secondary Python script was made, [metrics_crawler.py](/application/metrics_crawler.py), which does nothing more than execute code that calculates the instance's metrics every 5 minutes and saves them in a .csv file that feeds the route "/metrics".

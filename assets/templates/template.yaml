@@ -1106,5 +1106,5 @@ Outputs:
     Value: !Sub https://console.aws.amazon.com/sns/v3/home?region=${AWS::Region}#/topic/arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${AppSNSAlarmTopic}
     Description: SNS Alarm Topic 
   AppBudget:
-    Value: !Ref AppBudget
-    Description: Laboratory Budget
+    Value: !Sub https://console.aws.amazon.com/billing/home?region=${AWS::Region}&skipRegion=true#/budgets/details?name=${AppBudget}
+    Description: Laboratory Budget ($10)
