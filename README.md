@@ -93,7 +93,7 @@ All requisitions are listed as follows, and came from the [Laboratory material](
 For the development, we've managed to code and design a [SAML template](/assets/templates/template.yaml) for CloudFormation to launch a full stack, the is required some small user actions. a small snippet of the code is written down:
 
 ```yaml
-# Run (on /assets/templates/vpc/):
+# Run (on /assets/templates/):
 #    sam build
 #    sam deploy --guided --profile lab-sys.admin_mfa --capabilities CAPABILITY_NAMED_IAM
 
