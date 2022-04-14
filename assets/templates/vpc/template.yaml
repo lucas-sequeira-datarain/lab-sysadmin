@@ -36,10 +36,10 @@ Parameters:
     Description: Name of the SSH key pair to use for the instances.
     Type: String
     Default: lab-sysadmin
-  AppAlarmSNSARN:
-    Description: SNS ARN to send CloudWatch Alarms to.
+  AppSNSRecieverEmail:
+    Description: Email to recieve cloudwatch alarms.
     Type: String
-    Default: arn:aws:sns:us-east-1:685463979595:LucasSNSTopic
+    Default: lucas.sequeira@datarain.com.br
 
 # Este modelo do CloudFormation implanta uma VPC / Rede básica.
 Resources:
@@ -96,7 +96,7 @@ Resources:
   AppPrivateNACLEntryIngress:
     Type: AWS::EC2::NetworkAclEntry
     Properties: 
-      CidrBlock: !Ref AppVPCCidr
+      CidrBlock: 0.0.0.0/0
       Egress: true
       NetworkAclId: !Ref AppPrivateNACL
       Protocol: -1
@@ -106,7 +106,8 @@ Resources:
   AppPrivateNACLEntryEgress:
     Type: AWS::EC2::NetworkAclEntry
     Properties: 
-      CidrBlock: !Ref AppVPCCidr
+      # CidrBlock: !Ref AppVPCCidr
+      CidrBlock: 0.0.0.0/0
       Egress: false
       NetworkAclId: !Ref AppPrivateNACL
       Protocol: -1
@@ -396,11 +397,11 @@ Resources:
     Type: AWS::EC2::Instance
     DependsOn: 
       - AppBastionHostSG
-      - AppInstanceProfileRole
+      # - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppBastionHostImageId
       InstanceType: !Ref AppBastionHostInstanceType
-      IamInstanceProfile: !Ref AppInstanceProfileRole
+      # IamInstanceProfile: !Ref AppInstanceProfileRole
       KeyName: !Ref AppKeyName
       SecurityGroupIds:
         - !Ref AppBastionHostSG
@@ -414,11 +415,12 @@ Resources:
     DependsOn: 
       - AppServerBastionSG
       - AppServerSG
-      - AppInstanceProfileRole
+      - AppNATGateway
+      # - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppServerImageId
       InstanceType: !Ref AppServerInstanceType
-      IamInstanceProfile: !Ref AppInstanceProfileRole
+      # IamInstanceProfile: !Ref AppInstanceProfileRole
       KeyName: !Ref AppKeyName
       SecurityGroupIds:
         - !Ref AppServerBastionSG
@@ -439,11 +441,12 @@ Resources:
     DependsOn: 
       - AppServerBastionSG
       - AppServerSG
-      - AppInstanceProfileRole
+      - AppNATGateway
+      # - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppServerImageId
       InstanceType: !Ref AppServerInstanceType
-      IamInstanceProfile: !Ref AppInstanceProfileRole
+      # IamInstanceProfile: !Ref AppInstanceProfileRole
       KeyName: !Ref AppKeyName
       SecurityGroupIds:
         - !Ref AppServerBastionSG
@@ -465,10 +468,14 @@ Resources:
     DependsOn:
       - AppServerInstanceA
       - AppServerInstanceB
+      - AppVPC
     Properties:
       HealthCheckEnabled: true
       HealthCheckPath: /health
-      Name: AppTargetGroup
+      Protocol: HTTP
+      Port: 80
+      VpcId: !Ref AppVPC
+      Name: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "TargetGroup" ]]
       TargetType: instance
       Targets:
         - Id: !Ref AppServerInstanceA
@@ -503,18 +510,6 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref AppTargetGroup
-  
-  AppHTTPSListener:
-    Type: "AWS::ElasticLoadBalancingV2::Listener"
-    DependsOn:
-      - AppTargetGroup
-    Properties:
-      LoadBalancerArn: !Ref AppApplicationLoadBalancer
-      Port: 443
-      Protocol: HTTPS
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref AppTargetGroup
 
   # Instance Profile
   AppInstanceProfileRole:
@@ -541,6 +536,76 @@ Resources:
       ManagedPolicyArns: 
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
       RoleName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "InstanceProfileRole" ]]
+  
+  # SNS Topic
+  AppSNSAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "SNSTopic" ]]
+      Subscription:
+        - Endpoint: !Ref AppSNSRecieverEmail
+          Protocol: email
+  
+  # CloudWatch Alarms
+  AppBastionHostAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn:
+      - AppBastionHostInstance
+    Properties:
+      AlarmDescription: Alarms when instance status check fails for 10 consecutive minutes.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: '10'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '0'
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref AppBastionHostInstance
+      AlarmName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "BastionHostAlarm-SystemFail" ]]
+      AlarmActions:
+        - !Ref AppSNSAlarmTopic
+  
+  AppServerAAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn:
+      - AppServerInstanceA
+    Properties:
+      AlarmDescription: Alarms when instance status check fails for 10 consecutive minutes.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: '10'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '0'
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref AppServerInstanceA
+      AlarmName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ServerInstanceAAlarm-SystemFail" ]]
+      AlarmActions:
+        - !Ref AppSNSAlarmTopic
+  
+  AppServerBAlarm:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn:
+      - AppServerInstanceB
+    Properties:
+      AlarmDescription: Alarms when instance status check fails for 10 consecutive minutes.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: '10'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '0'
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref AppServerInstanceB
+      AlarmName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ServerInstanceBAlarm-SystemFail" ]]
+      AlarmActions:
+        - !Ref AppSNSAlarmTopic
 
 Outputs:
   AppBastionHostEIP:
