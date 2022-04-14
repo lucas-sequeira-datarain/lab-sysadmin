@@ -607,6 +607,368 @@ Resources:
       AlarmActions:
         - !Ref AppSNSAlarmTopic
 
+  # User Roles
+  AppAdminRole:
+    Type: AWS::IAM::Role
+    DependsOn:
+      - AppAdminUser
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${AWS::AccountId}:root
+                - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppAdminUser]]
+            Action:
+              - 'sts:AssumeRole'
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: true
+      Description: Role to provide admin access
+      Policies:
+        - PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "AdminRoleInlinePolicy" ]]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 'cloudformation:*'
+                Resource: '*'
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AdministratorAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/IAMFullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+      RoleName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "AdminRole" ]]
+  
+  AppComumRole:
+    Type: AWS::IAM::Role
+    DependsOn:
+      - AppAdminUser
+      - AppComumUser
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${AWS::AccountId}:root
+                - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppAdminUser]]
+                - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppComumUser]]
+            Action:
+              - 'sts:AssumeRole'
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: true
+      Description: Role to provide comum access
+      RoleName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ComumRole" ]]
+
+  # User Policies
+  AppVpcPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - AppComumRole
+    Properties:
+      Roles:
+        - !Ref AppComumRole
+      PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "VPCInlinePolicy" ]]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: UseVpcConsole
+          Effect: Allow
+          Action:
+          - ec2:DescribeAccountAttributes
+          - ec2:DescribeAddresses
+          - ec2:DescribeAvailabilityZones
+          - ec2:DescribeClassicLinkInstances
+          - ec2:DescribeClientVpnEndpoints
+          - ec2:DescribeCustomerGateways
+          - ec2:DescribeDhcpOptions
+          - ec2:DescribeEgressOnlyInternetGateways
+          - ec2:DescribeFlowLogs
+          - ec2:DescribeInternetGateways
+          - ec2:DescribeManagedPrefixLists
+          - ec2:DescribeMovingAddresses
+          - ec2:DescribeNatGateways
+          - ec2:DescribeNetworkAcls
+          - ec2:DescribeNetworkInterfaceAttribute
+          - ec2:DescribeNetworkInterfacePermissions
+          - ec2:DescribeNetworkInterfaces
+          - ec2:DescribePrefixLists
+          - ec2:DescribeRouteTables
+          - ec2:DescribeSecurityGroupReferences
+          - ec2:DescribeSecurityGroups
+          - ec2:DescribeSecurityGroupRules
+          - ec2:DescribeStaleSecurityGroups
+          - ec2:DescribeSubnets
+          - ec2:DescribeTags
+          - ec2:DescribeTrafficMirrorFilters
+          - ec2:DescribeTrafficMirrorSessions
+          - ec2:DescribeTrafficMirrorTargets
+          - ec2:DescribeTransitGateways
+          - ec2:DescribeTransitGatewayVpcAttachments
+          - ec2:DescribeTransitGatewayRouteTables
+          - ec2:DescribeVpcAttribute
+          - ec2:DescribeVpcClassicLink
+          - ec2:DescribeVpcClassicLinkDnsSupport
+          - ec2:DescribeVpcEndpoints
+          - ec2:DescribeVpcEndpointConnectionNotifications
+          - ec2:DescribeVpcEndpointConnections
+          - ec2:DescribeVpcEndpointServiceConfigurations
+          - ec2:DescribeVpcEndpointServicePermissions
+          - ec2:DescribeVpcEndpointServices
+          - ec2:DescribeVpcPeeringConnections
+          - ec2:DescribeVpcs
+          - ec2:DescribeVpnConnections
+          - ec2:DescribeVpnGateways
+          - ec2:GetManagedPrefixListAssociations
+          - ec2:GetManagedPrefixListEntries
+          Resource: "*"
+        - Sid: CreateVpcWithPublicSubnet
+          Effect: Allow
+          Action:
+          - ec2:CreateVpc
+          - ec2:CreateSubnet
+          - ec2:DescribeAvailabilityZones
+          - ec2:CreateRouteTable
+          - ec2:CreateRoute
+          - ec2:CreateInternetGateway
+          - ec2:AttachInternetGateway
+          - ec2:AssociateRouteTable
+          - ec2:ModifyVpcAttribute
+          Resource: "*"
+        - Sid: ModifyDeleteVpcResourcesIGW
+          Effect: Allow
+          Action: ec2:DeleteInternetGateway
+          Resource: arn:aws:ec2:*:*:internet-gateway/*
+          Condition:
+            StringEquals:
+              ec2:ResourceTag/author: lsequeira
+        - Sid: ModifyDeleteVpcResourcesRT
+          Effect: Allow
+          Action:
+          - ec2:DeleteRouteTable
+          - ec2:CreateRoute
+          - ec2:ReplaceRoute
+          - ec2:DeleteRoute
+          Resource: arn:aws:ec2:*:*:route-table/*
+          Condition:
+            StringEquals:
+              ec2:ResourceTag/author: lsequeira
+        - Sid: ManageSecurityGroupsDescribeSG
+          Effect: Allow
+          Action:
+          - ec2:DescribeSecurityGroups
+          - ec2:DescribeSecurityGroupRules
+          - ec2:DescribeVpcs
+          Resource: "*"
+        - Sid: ManageSecurityGroupsManageSG
+          Effect: Allow
+          Action:
+          - ec2:AuthorizeSecurityGroupIngress
+          - ec2:RevokeSecurityGroupIngress
+          - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+          - ec2:AuthorizeSecurityGroupEgress
+          - ec2:RevokeSecurityGroupEgress
+          - ec2:UpdateSecurityGroupRuleDescriptionsEgress
+          - ec2:ModifySecurityGroupRules
+          - ec2:DeleteSecurityGroup
+          Resource: arn:aws:ec2:*:*:security-group/*
+          Condition:
+            StringEquals:
+              ec2:ResourceTag/author: lsequeira
+        - Sid: ManageSecurityGroupsCreateSG
+          Effect: Allow
+          Action:
+          - ec2:CreateSecurityGroup
+          Resource: arn:aws:ec2:*:*:security-group/*
+          Condition:
+            StringEquals:
+              aws:RequestTag/author: lsequeira
+            ForAllValues:StringEquals:
+              aws:TagKeys:
+              - lsequeira
+        - Sid: ManageSecurityGroupsCreateTags
+          Effect: Allow
+          Action:
+          - ec2:CreateTags
+          Resource: arn:aws:ec2:*:*:security-group/*
+          Condition:
+            StringEquals:
+              ec2:CreateAction: CreateSecurityGroup
+        - Sid: ManageSecurityGroupRules
+          Effect: Allow
+          Action:
+          - ec2:AuthorizeSecurityGroupIngress
+          - ec2:RevokeSecurityGroupIngress
+          - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+          - ec2:AuthorizeSecurityGroupEgress
+          - ec2:RevokeSecurityGroupEgress
+          - ec2:UpdateSecurityGroupRuleDescriptionsEgress
+          - ec2:ModifySecurityGroupRules
+          Resource: !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:security-group/*
+          Condition:
+            ArnEquals:
+              ec2:Vpc: !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:vpc/vpc-id
+        - Effect: Allow
+          Action:
+          - ec2:DescribeSecurityGroups
+          - ec2:DescribeSecurityGroupRules
+          - ec2:DescribeTags
+          Resource: "*"
+
+  AppSNSPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - AppComumRole
+    Properties:
+      Roles:
+        - !Ref AppComumRole
+      PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "SNSInlinePolicy" ]]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: SNSReadOnly
+          Effect: Allow
+          Action:
+          - sns:Get*
+          - sns:List*
+          Resource: "*"
+        - Sid: SNSManageTopic
+          Effect: Allow
+          Action:
+          - kms:DescribeKey
+          - sns:TagResource
+          - sns:UntagResource
+          - sns:CreateTopic
+          - sns:Publish
+          - sns:Subscribe
+          - sns:Unsubscribe
+          - sns:ConfirmSubscription
+          - sns:DeleteTopic
+          Resource: "*"
+  
+  AppEC2Policy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - AppComumRole
+    Properties:
+      Roles:
+        - !Ref AppComumRole
+      PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "EC2InlinePolicy" ]]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ActionsRequiredtoRunDeleteVolumes
+          Effect: Allow
+          Action:
+          - ec2:DeleteVolume
+          - ec2:DeleteSnapshot
+          Resource: "*"
+          Condition:
+            StringEqualsIfExists:
+              ec2:InstanceType: t2.micro
+        - Sid: ActionsRequiredtoRunStopDeleteInstancesInVPC
+          Effect: Allow
+          Action:
+          - ec2:TerminateInstances
+          - ec2:RunInstances
+          - ec2:StopInstances
+          - ec2:StartInstances
+          Resource: "*"
+          Condition:
+            StringEqualsIfExists:
+              ec2:InstanceType: t2.micro
+        - Sid: SecurityAccess
+          Effect: Allow
+          Action:
+          - ec2:AuthorizeSecurityGroupIngress
+          - ec2:CreateKeyPair
+          Resource: "*"
+        - Sid: EC2Tagging
+          Effect: Allow
+          Action:
+          - ec2:CreateTags
+          - ec2:DeleteTags
+          Resource: "*"
+        - Sid: ReadOnlyAccess
+          Effect: Allow
+          Action:
+          - ec2:Describe*
+          - ec2:GetConsole*
+          - iam:ListInstanceProfiles
+          - compute-optimizer:GetEnrollmentStatus
+          Resource: "*"
+        - Sid: CloudWatchLogs
+          Effect: Allow
+          Action:
+          - cloudwatch:DescribeAlarms
+          - cloudwatch:GetMetricStatistics
+          - cloudwatch:PutMetricAlarm
+          - cloudwatch:ListDashboards
+          - cloudwatch:*Dashboard*
+          - cloudwatch:GetMetricData
+          Resource: "*"
+
+  AppMFAPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - AppComumUser
+      - AppAdminUser
+    Properties:
+      PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "MFAInlinePolicy" ]]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AllowViewAccountInfo
+          Effect: Allow
+          Action: iam:ListVirtualMFADevices
+          Resource: "*"
+        - Sid: AllowManageOwnVirtualMFADevice
+          Effect: Allow
+          Action:
+          - iam:CreateVirtualMFADevice
+          - iam:DeleteVirtualMFADevice
+          Resource: arn:aws:iam::*:mfa/${aws:username}
+        - Sid: AllowManageOwnUserMFA
+          Effect: Allow
+          Action:
+          - iam:DeactivateMFADevice
+          - iam:EnableMFADevice
+          - iam:GetUser
+          - iam:ListMFADevices
+          - iam:ResyncMFADevice
+          Resource: arn:aws:iam::*:user/${aws:username}
+      Users:
+        - !Ref AppComumUser
+        - !Ref AppAdminUser
+
+  # Users
+  AppAdminUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      UserName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "AdminUser" ]]
+      LoginProfile:
+        Password: D@tarain2022
+        PasswordResetRequired: true
+      Path: '/'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/IAMUserChangePassword
+  
+  AppComumUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      UserName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ComumUser" ]]
+      LoginProfile:
+        Password: D@tarain2022
+        PasswordResetRequired: true
+      Path: '/'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/IAMUserChangePassword
+
 Outputs:
   AppBastionHostEIP:
     Value: !Ref AppBastionHostEIP
