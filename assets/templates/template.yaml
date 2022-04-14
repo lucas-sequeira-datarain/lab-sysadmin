@@ -618,7 +618,6 @@ Resources:
           - Effect: Allow
             Principal:
               AWS:
-                - !Sub arn:aws:iam::${AWS::AccountId}:root
                 - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppAdminUser]]
             Action:
               - 'sts:AssumeRole'
@@ -654,7 +653,6 @@ Resources:
           - Effect: Allow
             Principal:
               AWS:
-                - !Sub arn:aws:iam::${AWS::AccountId}:root
                 - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppAdminUser]]
                 - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppComumUser]]
             Action:
