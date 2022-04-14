@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name 44.193.184.27;
+    server_name lab-sysadmin.belinelo.com.br;
 
     location / {
             proxy_pass http://unix:/home/ubuntu/lab-sysadmin/application/application.sock;

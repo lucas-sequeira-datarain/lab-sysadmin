@@ -11,9 +11,9 @@ Parameters:
   AppStage:
     Type: String
     Default: dev
-  AppInternetIpAccess:
+  AppInternetAccessCidr:
     Type: String
-    Default: 201.92.135.240
+    Default: 201.92.135.240/32
   AppServerImageId:
     Description: App Server Image ID for Application base EC2 instance.
     Type: AWS::EC2::Image::Id
@@ -106,8 +106,7 @@ Resources:
   AppPrivateNACLEntryEgress:
     Type: AWS::EC2::NetworkAclEntry
     Properties: 
-      # CidrBlock: !Ref AppVPCCidr
-      CidrBlock: 0.0.0.0/0
+      CidrBlock: !Ref AppVPCCidr
       Egress: false
       NetworkAclId: !Ref AppPrivateNACL
       Protocol: -1
@@ -310,10 +309,10 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     DependsOn: AppVPC
     Properties:
-      GroupDescription: Allow SSH to Bastion Host
+      GroupDescription: Allow SSH to Bastion Host (Only Lucas IP)
       VpcId: !Ref AppVPC
       SecurityGroupIngress:
-        - CidrIp: 0.0.0.0/0
+        - CidrIp: !Ref AppInternetAccessCidr
           IpProtocol: tcp
           FromPort: 22
           ToPort: 22
@@ -328,12 +327,14 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     DependsOn: AppVPC
     Properties:
-      GroupDescription: Allow All Traffic from internet (IP Lucas)
+      GroupDescription: Allow HTTP Traffic from internet
       VpcId: !Ref AppVPC
       SecurityGroupIngress:
-        - CidrIp: !Join ['/', [!Ref AppInternetIpAccess, '32']]
-          IpProtocol: -1
-          Description: IP Lucas
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          Description: Public HTTP Access
       SecurityGroupEgress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: -1
@@ -446,8 +447,8 @@ Resources:
     Properties:
       ImageId: !Ref AppServerImageId
       InstanceType: !Ref AppServerInstanceType
-      # IamInstanceProfile: !Ref AppInstanceProfileRole
-      KeyName: !Ref AppKeyName
+      IamInstanceProfile: !Ref AppInstanceProfileRole
+      # KeyName: !Ref AppKeyName
       SecurityGroupIds:
         - !Ref AppServerBastionSG
         - !Ref AppServerSG
@@ -613,6 +614,7 @@ Resources:
     DependsOn:
       - AppAdminUser
     Properties:
+      MaxSessionDuration: 14400 # 4 hours
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -648,6 +650,7 @@ Resources:
       - AppAdminUser
       - AppComumUser
     Properties:
+      MaxSessionDuration: 14400 # 4 hours
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -971,33 +974,20 @@ Resources:
 
 Outputs:
   AppBastionHostEIP:
-    Value: !Ref AppBastionHostEIP
-    Export:
-      Name: AppBastionHostEIP
+    Value: !Sub ${AppBastionHostEIP}
+    Description: Bastion Host EIP
   AppBastionHostInstance:
-    Value: !Ref AppBastionHostInstance
-    Export:
-      Name: AppBastionHostInstance
+    Value: !Sub https://console.aws.amazon.com/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${AppBastionHostInstance}
+    Description: Bastion Host Instance
   AppServerInstanceA:
-    Value: !Ref AppServerInstanceA
-    Export:
-      Name: AppServerInstanceA
+    Value: !Sub https://console.aws.amazon.com/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${AppServerInstanceA}
+    Description: Server A Instance
   AppServerInstanceB:
-    Value: !Ref AppServerInstanceB
-    Export:
-      Name: AppServerInstanceB
-  AppTargetGroup:
-    Value: !Ref AppTargetGroup
-    Export:
-      Name: AppTargetGroup
+    Value: !Sub https://console.aws.amazon.com/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${AppServerInstanceB}
+    Description: Server B Instance
   AppApplicationLoadBalancer:
-    Value: !Ref AppApplicationLoadBalancer
-    Export:
-      Name: AppApplicationLoadBalancer
-  AppInstanceProfileRole:
-    Value: !Ref AppInstanceProfileRole
-    Export:
-      Name: AppInstanceProfileRole
+    Value: !GetAtt AppApplicationLoadBalancer.DNSName
+    Description: Application Load Balancer DSN Name
   AppVPC:
     Value: !Ref AppVPC
     Export:
