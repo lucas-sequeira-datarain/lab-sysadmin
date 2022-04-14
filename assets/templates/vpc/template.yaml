@@ -447,8 +447,8 @@ Resources:
     Properties:
       ImageId: !Ref AppServerImageId
       InstanceType: !Ref AppServerInstanceType
-      IamInstanceProfile: !Ref AppInstanceProfileRole
-      # KeyName: !Ref AppKeyName
+      # IamInstanceProfile: !Ref AppInstanceProfileRole
+      KeyName: !Ref AppKeyName
       SecurityGroupIds:
         - !Ref AppServerBastionSG
         - !Ref AppServerSG
@@ -495,7 +495,6 @@ Resources:
       Subnets:
         - !Ref AppPublicSubnetA
         - !Ref AppPublicSubnetB
-        - !Ref AppPublicSubnetC
       Tags:
       - Key: Name
         Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "LoadBalancer" ]]
@@ -973,80 +972,93 @@ Resources:
         - arn:aws:iam::aws:policy/IAMUserChangePassword
 
 Outputs:
-  AppBastionHostEIP:
-    Value: !Sub ${AppBastionHostEIP}
-    Description: Bastion Host EIP
   AppBastionHostInstance:
     Value: !Sub https://console.aws.amazon.com/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${AppBastionHostInstance}
     Description: Bastion Host Instance
+  AppBastionHostInstancePublicIP:
+    Value: !Sub ${AppBastionHostEIP}
+    Description: Bastion Host Public IP
   AppServerInstanceA:
     Value: !Sub https://console.aws.amazon.com/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${AppServerInstanceA}
     Description: Server A Instance
+  AppServerInstanceAPrivateIP:
+    Value: !GetAtt AppServerInstanceA.PrivateIp
+    Description: Server A Private IP
   AppServerInstanceB:
     Value: !Sub https://console.aws.amazon.com/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${AppServerInstanceB}
     Description: Server B Instance
-  AppApplicationLoadBalancer:
+  AppServerInstanceBPrivateIP:
+    Value: !GetAtt AppServerInstanceB.PrivateIp
+    Description: Server B Private IP
+  AppApplicationLoadBalancerDNSName:
     Value: !GetAtt AppApplicationLoadBalancer.DNSName
-    Description: Application Load Balancer DSN Name
+    Description: Application Load Balancer DNS Name
   AppVPC:
-    Value: !Ref AppVPC
-    Export:
-      Name: AppVPC
-  AppPublicNACL:
-    Value: !Ref AppPublicNACL
-    Export:
-      Name: AppPublicNACL
-  AppPrivateNACL:
-    Value: !Ref AppPrivateNACL
-    Export:
-      Name: AppPrivateNACL
-  AppPublicRouteTable:
-    Value: !Ref AppPublicRouteTable
-    Export:
-      Name: AppPublicRouteTable
-  AppPrivateRouteTable:
-    Value: !Ref AppPrivateRouteTable
-    Export:
-      Name: AppPrivateRouteTable
-  AppPublicSubnetA:
-    Value: !Ref AppPublicSubnetA
-    Export:
-      Name: AppPublicSubnetA
-  AppPublicSubnetB:
-    Value: !Ref AppPublicSubnetB
-    Export:
-      Name: AppPublicSubnetB
-  AppPublicSubnetC:
-    Value: !Ref AppPublicSubnetC
-    Export:
-      Name: AppPublicSubnetC
-  AppPrivateSubnetA:
-    Value: !Ref AppPrivateSubnetA
-    Export:
-      Name: AppPrivateSubnetA
-  AppPrivateSubnetB:
-    Value: !Ref AppPrivateSubnetB
-    Export:
-      Name: AppPrivateSubnetB
-  AppPrivateSubnetC:
-    Value: !Ref AppPrivateSubnetC
-    Export:
-      Name: AppPrivateSubnetC
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#VpcDetails:VpcId=${AppVPC}
+    Description: VPC For Application
   AppBastionHostSG:
-    Value: !Ref AppBastionHostSG
-    Export:
-      Name: AppBastionHostSG
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SecurityGroup:groupId=${AppBastionHostSG}
+    Description: Bastion Host Security Group
   AppServerSG:
-    Value: !Ref AppServerSG
-    Export:
-      Name: AppServerSG
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SecurityGroup:groupId=${AppServerSG}
+    Description: Server Security Group
   AppServerBastionSG:
-    Value: !Ref AppServerBastionSG
-    Export:
-      Name: AppServerBastionSG
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SecurityGroup:groupId=${AppServerBastionSG}
+    Description: Bastion Host Access to Server Security Group
   AppLoadBalancerSG:
-    Value: !Ref AppLoadBalancerSG
-    Export:
-      Name: AppLoadBalancerSG
-
-  
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SecurityGroup:groupId=${AppLoadBalancerSG}
+    Description: Load Balancer Security Group
+  AppPublicRouteTable:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#RouteTableDetails:RouteTableId=${AppPublicRouteTable}
+    Description: Public Route Table
+  AppPrivateRouteTable:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#RouteTableDetails:RouteTableId=${AppPrivateRouteTable}
+    Description: Private Route Table
+  AppPublicNACL:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#NetworkAclDetails:networkAclId=${AppPublicNACL}
+    Description: Public Network ACL
+  AppPrivateNACL:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#NetworkAclDetails:networkAclId=${AppPrivateNACL}
+    Description: Private Network ACL
+  AppPublicSubnetA:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SubnetDetails:subnetId=${AppPublicSubnetA}
+    Description: Public Subnet A
+  AppPublicSubnetB:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SubnetDetails:subnetId=${AppPublicSubnetB}
+    Description: Public Subnet B
+  AppPublicSubnetC:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SubnetDetails:subnetId=${AppPublicSubnetC}
+    Description: Public Subnet C
+  AppPrivateSubnetA:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SubnetDetails:subnetId=${AppPrivateSubnetA}
+    Description: Private Subnet A
+  AppPrivateSubnetB:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SubnetDetails:subnetId=${AppPrivateSubnetB}
+    Description: Private Subnet B
+  AppPrivateSubnetC:
+    Value: !Sub https://console.aws.amazon.com/vpc/home?region=${AWS::Region}#SubnetDetails:subnetId=${AppPrivateSubnetC}
+    Description: Private Subnet C
+  AppAdminUser:
+    Value: !Sub https://console.aws.amazon.com/iam/home#/users/${AppAdminUser}
+    Description: Admin User
+  AppComumUser:
+    Value: !Sub https://console.aws.amazon.com/iam/home#/users/${AppComumUser}
+    Description: Comum User
+  AppAdminRole:
+    Value: !Sub https://console.aws.amazon.com/iamv2/home#/roles/details/${AppAdminRole}
+    Description: Admin Role
+  AppComumRole:
+    Value: !Sub https://console.aws.amazon.com/iamv2/home#/roles/details/${AppComumRole}
+    Description: Comum Role
+  AppBastionHostAlarm:
+    Value: !Sub https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#alarmsV2:alarm/${AppBastionHostAlarm}?
+    Description: Bastion Host Fail Alarm
+  AppServerAAlarm:
+    Value: !Sub https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#alarmsV2:alarm/${AppServerAAlarm}?
+    Description: Server A Fail Alarm
+  AppServerBAlarm:
+    Value: !Sub https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#alarmsV2:alarm/${AppServerBAlarm}?
+    Description: Server B Fail Alarm
+  AppSNSAlarmTopic:
+    Value: !Sub https://console.aws.amazon.com/sns/v3/home?region=${AWS::Region}#/topic/arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${AppSNSAlarmTopic}
+    Description: SNS Alarm Topic 
