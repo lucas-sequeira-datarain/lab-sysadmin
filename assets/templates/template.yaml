@@ -43,7 +43,7 @@ Parameters:
   AppSSOARN:
     Description: AWS ARN of the AWS IAM Role to be used for SSO.
     Type: String
-    Default: !Sub arn:aws:iam::${AWS::AccountId}:saml-provider/AWSSSO_05849c2d742a0b38_DO_NOT_DELETE
+    Default: !Sub arn:aws:iam::685463979595:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_69c5f967629e5ab5
 
 # Este modelo do CloudFormation implanta uma VPC / Rede básica.
 Resources:
@@ -623,7 +623,6 @@ Resources:
             Principal:
               AWS:
                 - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppAdminUser]]
-              Federated: 
                 - !Ref AppSSOARN
             Action:
               - 'sts:AssumeRole'
@@ -661,7 +660,6 @@ Resources:
               AWS:
                 - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppAdminUser]]
                 - !Join ['/', [!Sub "arn:aws:iam::${AWS::AccountId}:user" , !Ref AppComumUser]]
-              Federated: 
                 - !Ref AppSSOARN
             Action:
               - 'sts:AssumeRole'
@@ -930,26 +928,26 @@ Resources:
       PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "MFAInlinePolicy" ]]
       PolicyDocument:
         PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: DenyAllExceptListedIfNoMFA
-            Effect: Deny
-            NotAction:
-            - iam:CreateVirtualMFADevice
-            - iam:DeleteVirtualMFADevice
-            - iam:DeactivateMFADevice
-            - iam:EnableMFADevice
-            - iam:GetUser
-            - iam:ListMFADevices
-            - iam:ListVirtualMFADevices
-            - iam:ResyncMFADevice
-            - sts:GetSessionToken
-            - iam:ChangePassword
-            - iam:GetAccountPasswordPolicy
-            Resource: "*"
-            Condition:
-              BoolIfExists:
-                aws:MultiFactorAuthPresent: 'false'
+          Version: '2012-10-17'
+          Statement:
+            - Sid: DenyAllExceptListedIfNoMFA
+              Effect: Deny
+              NotAction:
+              - iam:CreateVirtualMFADevice
+              - iam:DeleteVirtualMFADevice
+              - iam:DeactivateMFADevice
+              - iam:EnableMFADevice
+              - iam:GetUser
+              - iam:ListMFADevices
+              - iam:ListVirtualMFADevices
+              - iam:ResyncMFADevice
+              - sts:GetSessionToken
+              - iam:ChangePassword
+              - iam:GetAccountPasswordPolicy
+              Resource: "*"
+              Condition:
+                BoolIfExists:
+                  aws:MultiFactorAuthPresent: 'false'
       Users:
         - !Ref AppComumUser
         - !Ref AppAdminUser
