@@ -43,7 +43,7 @@ Parameters:
   AppSSOARN:
     Description: AWS ARN of the AWS IAM Role to be used for SSO.
     Type: String
-    Default: !Sub arn:aws:iam::685463979595:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_69c5f967629e5ab5
+    Default: arn:aws:iam::685463979595:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_69c5f967629e5ab5
 
 # Este modelo do CloudFormation implanta uma VPC / Rede básica.
 Resources:
