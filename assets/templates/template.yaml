@@ -967,6 +967,38 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/IAMUserChangePassword
   
+  AppUserMFAPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - AppComumUser
+      - AppAdminUser
+    Properties: 
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyAllExceptListedIfNoMFA
+            Effect: Deny
+            NotAction:
+            - iam:CreateVirtualMFADevice
+            - iam:DeleteVirtualMFADevice
+            - iam:DeactivateMFADevice
+            - iam:EnableMFADevice
+            - iam:GetUser
+            - iam:ListMFADevices
+            - iam:ListVirtualMFADevices
+            - iam:ResyncMFADevice
+            - sts:GetSessionToken
+            - iam:ChangePassword
+            - iam:GetAccountPasswordPolicy
+            Resource: "*"
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: 'false'
+      PolicyName: String
+      Users: 
+        - AppComumUser
+        - AppAdminUser
+  
   # Budget
   AppBudget:
     Type: "AWS::Budgets::Budget"
