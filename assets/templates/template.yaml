@@ -13,7 +13,7 @@ Parameters:
     Default: dev
   AppInternetAccessCidr:
     Type: String
-    Default: 201.92.135.240/32
+    Default: 189.0.124.125/32
   AppServerImageId:
     Description: App Server Image ID for Application base EC2 instance.
     Type: AWS::EC2::Image::Id
@@ -111,6 +111,7 @@ Resources:
     Type: AWS::EC2::NetworkAclEntry
     Properties: 
       CidrBlock: !Ref AppVPCCidr
+      # CidrBlock: 0.0.0.0/0
       Egress: false
       NetworkAclId: !Ref AppPrivateNACL
       Protocol: -1
@@ -357,6 +358,10 @@ Resources:
       SecurityGroupIngress:
         - SourceSecurityGroupId: !Ref AppLoadBalancerSG
           IpProtocol: -1
+          Description: Load Balancer
+        - CidrIp: !Ref AppVPCCidr
+          IpProtocol: -1
+          Description: Internal VPC
       SecurityGroupEgress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: -1
@@ -419,6 +424,7 @@ Resources:
       - AppServerBastionSG
       - AppServerSG
       - AppNATGateway
+      - AppPrivateRoute
       # - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppServerImageId
@@ -445,6 +451,7 @@ Resources:
       - AppServerBastionSG
       - AppServerSG
       - AppNATGateway
+      - AppPrivateRoute
       # - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppServerImageId
@@ -926,34 +933,33 @@ Resources:
       - AppAdminRole
     Properties:
       PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "MFAInlinePolicy" ]]
-      PolicyDocument:
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Sid: DenyAllExceptListedIfNoMFA
-              Effect: Deny
-              NotAction:
-              - iam:CreateVirtualMFADevice
-              - iam:DeleteVirtualMFADevice
-              - iam:DeactivateMFADevice
-              - iam:EnableMFADevice
-              - iam:GetUser
-              - iam:ListMFADevices
-              - iam:ListVirtualMFADevices
-              - iam:ResyncMFADevice
-              - sts:GetSessionToken
-              - iam:ChangePassword
-              - iam:GetAccountPasswordPolicy
-              Resource: "*"
-              Condition:
-                BoolIfExists:
-                  aws:MultiFactorAuthPresent: 'false'
       Users:
         - !Ref AppComumUser
         - !Ref AppAdminUser
       Roles:
         - !Ref AppComumRole
         - !Ref AppAdminRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyAllExceptListedIfNoMFA
+            Effect: Deny
+            NotAction:
+            - iam:CreateVirtualMFADevice
+            - iam:DeleteVirtualMFADevice
+            - iam:DeactivateMFADevice
+            - iam:EnableMFADevice
+            - iam:GetUser
+            - iam:ListMFADevices
+            - iam:ListVirtualMFADevices
+            - iam:ResyncMFADevice
+            - sts:GetSessionToken
+            - iam:ChangePassword
+            - iam:GetAccountPasswordPolicy
+            Resource: "*"
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: 'false'
 
   # Users
   AppAdminUser:
