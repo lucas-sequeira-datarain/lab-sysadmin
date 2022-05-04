@@ -44,6 +44,11 @@ Parameters:
     Description: AWS ARN of the AWS IAM Role to be used for SSO.
     Type: String
     Default: arn:aws:iam::685463979595:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_69c5f967629e5ab5
+  AppDefaultPassword:
+    Description: Default password to be used for the instances.
+    Type: String
+    Default: D@tarain2022
+    NoEcho: true
 
 # Este modelo do CloudFormation implanta uma VPC / Rede básica.
 Resources:
@@ -274,7 +279,7 @@ Resources:
   AppElasticIPAddress:
     Type: AWS::EC2::EIP
     Properties:
-      Domain: AppVPC
+      Domain: vpc
   
   # Anexar as sub-redes públicas às tabelas de rotas públicas
   # e anexar as sub-redes privadas às tabelas de rotas privadas:     
@@ -312,7 +317,6 @@ Resources:
   # Security Groups
   AppBastionHostSG:
     Type: AWS::EC2::SecurityGroup
-    DependsOn: AppVPC
     Properties:
       GroupDescription: Allow SSH to Bastion Host (Only Lucas IP)
       VpcId: !Ref AppVPC
@@ -330,7 +334,6 @@ Resources:
 
   AppLoadBalancerSG:
     Type: AWS::EC2::SecurityGroup
-    DependsOn: AppVPC
     Properties:
       GroupDescription: Allow HTTP Traffic from internet
       VpcId: !Ref AppVPC
@@ -349,9 +352,6 @@ Resources:
 
   AppServerSG:
     Type: AWS::EC2::SecurityGroup
-    DependsOn: 
-      - AppVPC
-      - AppLoadBalancerSG
     Properties:
       GroupDescription: Allow All Traffic from LoadBalancerSG and Internal VPC
       VpcId: !Ref AppVPC
@@ -371,9 +371,6 @@ Resources:
 
   AppServerBastionSG:
     Type: AWS::EC2::SecurityGroup
-    DependsOn: 
-      - AppVPC
-      - AppBastionHostSG
     Properties:
       GroupDescription: Allow SSH from BastionHostSG
       VpcId: !Ref AppVPC
@@ -395,7 +392,7 @@ Resources:
     DependsOn: 
       - AppVPC
     Properties:
-      Domain: Vpc
+      Domain: vpc
       InstanceId: !Ref AppBastionHostInstance
       Tags:
       - Key: Name
@@ -404,8 +401,7 @@ Resources:
   AppBastionHostInstance:
     Type: AWS::EC2::Instance
     DependsOn: 
-      - AppBastionHostSG
-      # - AppInstanceProfileRole
+      - AppInstanceProfileRole
     Properties:
       ImageId: !Ref AppBastionHostImageId
       InstanceType: !Ref AppBastionHostInstanceType
@@ -421,8 +417,6 @@ Resources:
   AppServerInstanceA:
     Type: AWS::EC2::Instance
     DependsOn: 
-      - AppServerBastionSG
-      - AppServerSG
       - AppNATGateway
       - AppPrivateRoute
       # - AppInstanceProfileRole
@@ -439,7 +433,7 @@ Resources:
       - Key: Name
         Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ServerInstanceA" ]]
       UserData:
-        Fn::Base64: !Sub |
+        Fn::Base64: |
           #!/bin/bash -xe
           sudo rm -r lab-sysadmin
           git clone https://github.com/lucas-sequeira-datarain/lab-sysadmin.git
@@ -448,8 +442,6 @@ Resources:
   AppServerInstanceB:
     Type: AWS::EC2::Instance
     DependsOn: 
-      - AppServerBastionSG
-      - AppServerSG
       - AppNATGateway
       - AppPrivateRoute
       # - AppInstanceProfileRole
@@ -466,7 +458,7 @@ Resources:
       - Key: Name
         Value: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ServerInstanceB" ]]
       UserData:
-        Fn::Base64: !Sub |
+        Fn::Base64: |
           #!/bin/bash -xe
           sudo rm -r lab-sysadmin
           git clone https://github.com/lucas-sequeira-datarain/lab-sysadmin.git
@@ -475,10 +467,6 @@ Resources:
   # Target Group
   AppTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DependsOn:
-      - AppServerInstanceA
-      - AppServerInstanceB
-      - AppVPC
     Properties:
       HealthCheckEnabled: true
       HealthCheckPath: /health
@@ -510,8 +498,6 @@ Resources:
   
   AppHTTPListener:
     Type: "AWS::ElasticLoadBalancingV2::Listener"
-    DependsOn:
-      - AppTargetGroup
     Properties:
       LoadBalancerArn: !Ref AppApplicationLoadBalancer
       Port: 80
@@ -558,8 +544,6 @@ Resources:
   # CloudWatch Alarms
   AppBastionHostAlarm:
     Type: AWS::CloudWatch::Alarm
-    DependsOn:
-      - AppBastionHostInstance
     Properties:
       AlarmDescription: Alarms when instance status check fails for 10 consecutive minutes.
       Namespace: AWS/EC2
@@ -578,8 +562,6 @@ Resources:
   
   AppServerAAlarm:
     Type: AWS::CloudWatch::Alarm
-    DependsOn:
-      - AppServerInstanceA
     Properties:
       AlarmDescription: Alarms when instance status check fails for 10 consecutive minutes.
       Namespace: AWS/EC2
@@ -598,8 +580,6 @@ Resources:
   
   AppServerBAlarm:
     Type: AWS::CloudWatch::Alarm
-    DependsOn:
-      - AppServerInstanceB
     Properties:
       AlarmDescription: Alarms when instance status check fails for 10 consecutive minutes.
       Namespace: AWS/EC2
@@ -619,8 +599,6 @@ Resources:
   # User Roles
   AppAdminRole:
     Type: AWS::IAM::Role
-    DependsOn:
-      - AppAdminUser
     Properties:
       MaxSessionDuration: 14400 # 4 hours
       AssumeRolePolicyDocument:
@@ -654,9 +632,6 @@ Resources:
   
   AppComumRole:
     Type: AWS::IAM::Role
-    DependsOn:
-      - AppAdminUser
-      - AppComumUser
     Properties:
       MaxSessionDuration: 14400 # 4 hours
       AssumeRolePolicyDocument:
@@ -679,8 +654,6 @@ Resources:
   # User Policies
   AppVpcPolicy:
     Type: AWS::IAM::Policy
-    DependsOn:
-      - AppComumRole
     Properties:
       Roles:
         - !Ref AppComumRole
@@ -833,8 +806,6 @@ Resources:
 
   AppSNSPolicy:
     Type: AWS::IAM::Policy
-    DependsOn:
-      - AppComumRole
     Properties:
       Roles:
         - !Ref AppComumRole
@@ -864,8 +835,6 @@ Resources:
   
   AppEC2Policy:
     Type: AWS::IAM::Policy
-    DependsOn:
-      - AppComumRole
     Properties:
       Roles:
         - !Ref AppComumRole
@@ -926,11 +895,6 @@ Resources:
 
   AppMFAPolicy:
     Type: AWS::IAM::Policy
-    DependsOn:
-      - AppComumUser
-      - AppAdminUser
-      - AppComumRole
-      - AppAdminRole
     Properties:
       PolicyName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "MFAInlinePolicy" ]]
       Users:
@@ -967,7 +931,7 @@ Resources:
     Properties:
       UserName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "AdminUser" ]]
       LoginProfile:
-        Password: D@tarain2022
+        Password: !Ref AppDefaultPassword
         PasswordResetRequired: true
       Path: '/'
       ManagedPolicyArns:
@@ -978,7 +942,7 @@ Resources:
     Properties:
       UserName: !Join ['-', [!Ref "AWS::StackName" , !Ref AppStage, "ComumUser" ]]
       LoginProfile:
-        Password: D@tarain2022
+        Password: !Ref AppDefaultPassword
         PasswordResetRequired: true
       Path: '/'
       ManagedPolicyArns:
